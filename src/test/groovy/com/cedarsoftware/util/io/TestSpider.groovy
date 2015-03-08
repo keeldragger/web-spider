@@ -1,13 +1,13 @@
-package com.cedarsoftware.util.io;
+package com.cedarsoftware.util.io
+
+import org.junit.Test;
 
 /**
- * Test cases for JsonReader / JsonWriter
- *
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br>
  *         Copyright (c) Cedar Software LLC
  *         <br><br>
- *         Licensed under the Apache License, Version 2.0 (the "License");
+ *         Licensed under the Apache License, Version 2.0 (the "License")
  *         you may not use this file except in compliance with the License.
  *         You may obtain a copy of the License at
  *         <br><br>
@@ -19,7 +19,11 @@ package com.cedarsoftware.util.io;
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-public class TestJsonReaderWriter
+public class TestSpider
 {
-    // Left here, because you need at least one Java (due to bug in Eclipse Groovy compile plug in)
+    @Test
+    void testSpider()
+    {
+        assert 1 == true
+    }
 }
