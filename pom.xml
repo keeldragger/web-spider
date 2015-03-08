@@ -184,36 +184,12 @@
             <groupId>com.cedarsoftware</groupId>
             <artifactId>java-util</artifactId>
             <version>${version.java-util}</version>
-            <scope>test</scope>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${version.gson}</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy</artifactId>
+            <artifactId>groovy-all</artifactId>
             <version>${version.groovy}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-templates</artifactId>
-            <version>${version.groovy}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-xml</artifactId>
-            <version>${version.groovy}</version>
-            <scope>test</scope>
         </dependency>
 
     </dependencies>

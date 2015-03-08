@@ -24,6 +24,6 @@ public class TestSpider
     @Test
     void testSpider()
     {
-        assert 1 == true
+        assert 1 == 1
     }
 }
