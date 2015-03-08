@@ -1,7 +1,9 @@
 package com.cedarsoftware.webspider
 
+import com.cedarsoftware.util.EncryptionUtilities
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
+import groovy.transform.CompileStatic
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.jsoup.HttpStatusException
@@ -12,91 +14,123 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 
 import javax.net.ssl.SSLHandshakeException
+import java.util.regex.Pattern
 
 /**
  * Created by jderegnaucourt on 2015/03/08.
  */
+@CompileStatic
 class WebSpider
 {
     static final String USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'
     private static final Logger LOG = LogManager.getLogger(WebSpider.class)
+    private static final Pattern emailPattern = ~/.+\@.+\..+/
 
     WebSpider()
     {
-        UrlUtilities.userAgent = USER_AGENT;
+        UrlUtilities.userAgent = USER_AGENT
     }
 
     void crawl(Receiver receiver)
     {
-        final Deque<String> stack = new ArrayDeque<>()
-        stack.addFirst("http://www.pricewatch.com/")
+        final Deque<Anchor> stack = new ArrayDeque<>()
+        stack.addFirst(new Anchor(url:'http://groovy-lang.org/', text:'root'))
         Set<String> visited = new HashSet<>()
 
         while (!stack.isEmpty())
         {
-            final String url = stack.removeFirst()
+            final Anchor anchor = stack.removeFirst()
 
-            if (visited.contains(url))
-            {
+            if (beenThere(anchor.url, visited))
+            {   // Don't redo site already processed.
                 continue
             }
 
-            visited.add(url)
+            visited.add(anchor.url.length() <= 40 ? anchor.url : EncryptionUtilities.calculateSHA1Hash(anchor.url.bytes))
             try
             {
-                Document doc = Jsoup.connect(url).userAgent(USER_AGENT).followRedirects(true).get()
-                receiver.digest(url, doc.location(), doc.title(), doc.outerHtml(), System.currentTimeMillis())
-                Map contents = extractUrls(doc)
-                for (Link link in contents.links)
+                // Snag HTML Document at URL
+                Document doc = Jsoup.connect(anchor.url).userAgent(USER_AGENT).followRedirects(true).get()
+                receiver.html(anchor.url, anchor.text, doc, System.currentTimeMillis())
+                Map<String, Set<Anchor>> contents = extractUrls(doc)
+                for (Anchor link in contents.links)
                 {
-                    if (StringUtilities.hasContent(link.url) && !visited.contains(link.url))
+                    if (StringUtilities.hasContent(link.url) && !beenThere(link.url, visited))
                     {   // Skip empty or blank urls.
-                        stack.add(link.url)
+                        stack.add(link)
                     }
                 }
             }
             catch (HttpStatusException e)
             {
-                LOG.info('HTTP status exception (' + e.statusCode + '), url: ' + url + ', ' + e.message)
+                LOG.info('HTTP status exception (' + e.statusCode + '), url: ' + anchor.url + ', ' + e.message)
             }
             catch (MalformedURLException e)
             {
-                if (url.toLowerCase().startsWith("mailto:"))
+                if (anchor.url.toLowerCase().startsWith("mailto:"))
                 {
-                    receiver.mailto(url.substring(7));
+                    String email = anchor.url.substring(7)
+                    if (emailPattern.matcher(email).find())
+                    {
+                        receiver.mailto(anchor.text, email)
+                    }
                 }
-                LOG.info('Malformed URL, url: ' + url + ', msg: ' + e.message)
+                else
+                {
+                    LOG.info('Malformed URL, url: ' + anchor.url + ', msg: ' + e.message)
+                }
             }
             catch (UnsupportedMimeTypeException e)
             {
-                if (e.mimeType.startsWith("application/pdf"))
+                String mimeType = e.mimeType.toLowerCase()
+                if (mimeType.startsWith("application/pdf"))
                 {
-
+                    receiver.pdf(anchor.url, anchor.text)
                 }
-                LOG.info('Unsupported mime type (' + e.mimeType + '), url: ' + url)
+                else if (mimeType.startsWith("image/"))
+                {
+                    receiver.image(anchor.url, anchor.text, mimeType.substring(6))
+                }
+                else if (mimeType.startsWith("application/zip"))
+                {
+                    receiver.zip(anchor.url, anchor.text)
+                }
+                else if (mimeType.startsWith("application/java-archive"))
+                {
+                    receiver.jar(anchor.url, anchor.text)
+                }
+                else
+                {
+                    LOG.info('Unsupported mime type (' + e.mimeType + '), url: ' + anchor.url)
+                }
             }
             catch (SocketTimeoutException e)
             {
-                LOG.info('Socket timeout, url: ' + url + ', msg: ' + e.message)
+                LOG.info('Socket timeout, url: ' + anchor.url + ', msg: ' + e.message)
             }
             catch (SSLHandshakeException e)
             {
-                LOG.info('SSL Handshake error, url: ' + url + ', msg: ' + e.message)
+                LOG.info('SSL Handshake error, url: ' + anchor.url + ', msg: ' + e.message)
             }
             catch (IOException e)
             {
-                LOG.info('IO Exception, url: ' + url + ', msg: ' + e.message)
+                LOG.info('IO Exception, url: ' + anchor.url + ', msg: ' + e.message)
             }
             catch (IllegalArgumentException e)
             {
-                LOG.info('Illegal argument exception, url: ' + url + ', msg: ' + e.message)
+                LOG.info('Illegal argument exception, url: ' + anchor.url + ', msg: ' + e.message)
             }
             catch (Exception e)
             {
-                println 'error, url: ' + url
+                println 'error, url: ' + anchor
                 e.printStackTrace()
             }
         }
+    }
+
+    boolean beenThere(String url, Set<String> visited)
+    {
+        return visited.contains(url) || visited.contains(EncryptionUtilities.calculateSHA1Hash(url.bytes))
     }
 
     /**
@@ -113,7 +147,7 @@ class WebSpider
     Map extractUrls(Document doc)
     {
         Map contents = [:]
-        Set<Link> links = []
+        Set<Anchor> links = []
 
         Elements anchors = doc.select("a[href]")
         Elements media = doc.select("[src]")
@@ -122,7 +156,7 @@ class WebSpider
 //        print("\nLinks: (%d)", links.size())
         for (Element anchor : anchors)
         {
-            Link link = new Link([url:anchor.attr('abs:href'), text:anchor.text()])
+            Anchor link = new Anchor([url:anchor.attr('abs:href'), text:anchor.text()])
             links.add(link)
         }
 
@@ -140,7 +174,7 @@ class WebSpider
 //            else
 //            {
 //                print(" * %s: <%s>", src.tagName(), src.attr("abs:src"))
-//            };
+//            }
 //        }
 //
 //        print("\nImports: (%d)", imports.size())

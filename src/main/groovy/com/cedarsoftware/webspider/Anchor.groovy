@@ -3,8 +3,13 @@ package com.cedarsoftware.webspider
 /**
  * Created by jderegnaucourt on 2015/03/08.
  */
-class Source
+class Anchor
 {
     String url
-    boolean stayWithinDomain
+    String text
+
+    String toString()
+    {
+        return '<' + url + '>' + text
+    }
 }

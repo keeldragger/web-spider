@@ -1,23 +1,67 @@
 package com.cedarsoftware.webspider
 
+import groovy.transform.CompileStatic
+import org.jsoup.nodes.Document
+
 /**
  * Created by jderegnaucourt on 2015/03/08.
  */
+@CompileStatic
 class Receiver
 {
-    void digest(String sourceUrl, String actualUrl, String title, String content, long time)
+    void html(String url, String anchorText, Document doc, long time)
     {
-        println 'source: ' + sourceUrl
-        println 'actual: ' + actualUrl
-        println 'title: ' + title
-//        println 'time: ' + new Date(time)
+//        println 'source: ' + url
+        println 'link: ' + anchorText + ' (' + doc.location() + ')'
         println '------------------------------------------------------------------------------------------------------'
-//        println content
-//        println '******************************************************************************************************'
+//        println 'title: ' + doc.title()
+//        println 'html: ' + doc.outerHtml()
+//        println 'time: ' + new Date(time)
     }
 
-    void mailto(String emailAddress)
+    void pdf(String url, String anchorText)
     {
-        println 'Email address: ' + emailAddress
+        println '*'
+        println '*'
+        println 'PDF: ' + anchorText + '(' + url + ')'
+        println '*'
+        println '*'
+    }
+
+    void image(String url, String anchorText, String imageType)
+    {
+        println '*'
+        println '*'
+        println 'image: ' + anchorText + '(' + url + ')'
+        println 'type: ' + imageType
+        println '*'
+        println '*'
+    }
+
+    void zip(String url, String anchorText)
+    {
+        println '*'
+        println '*'
+        println 'zip: ' + anchorText + '(' + url + ')'
+        println '*'
+        println '*'
+    }
+
+    void jar(String url, String anchorText)
+    {
+        println '*'
+        println '*'
+        println 'zip: ' + anchorText + '(' + url + ')'
+        println '*'
+        println '*'
+    }
+
+    void mailto(String anchorText, String emailAddress)
+    {
+        println '*'
+        println '*'
+        println 'Email: ' + emailAddress
+        println '*'
+        println '*'
     }
 }
