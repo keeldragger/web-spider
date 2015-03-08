@@ -2,6 +2,7 @@ package com.cedarsoftware.webspider
 
 import groovy.transform.CompileStatic
 import org.jsoup.nodes.Document
+import org.jsoup.select.Elements
 
 /**
  * Created by jderegnaucourt on 2015/03/08.
@@ -9,59 +10,102 @@ import org.jsoup.nodes.Document
 @CompileStatic
 class Receiver
 {
-    void html(String url, String anchorText, Document doc, long time)
+    /**
+     * @param anchor Contains link text, url, and pointer to document containing link
+     * @param doc Document that this anchor points to
+     * @param time When the content (doc) was retrieved.
+     */
+    void processLink(Anchor anchor, Document doc, long time)
     {
 //        println 'source: ' + url
-        println 'link: ' + anchorText + ' (' + doc.location() + ')'
+        println 'link: ' + anchor
+//        println 'found in: ' + anchor.container?.location()
+        fetchLinks(doc)
         println '------------------------------------------------------------------------------------------------------'
 //        println 'title: ' + doc.title()
 //        println 'html: ' + doc.outerHtml()
 //        println 'time: ' + new Date(time)
+
     }
 
-    void pdf(String url, String anchorText)
+    void processPDF(Anchor anchor, long time)
     {
-        println '*'
-        println '*'
-        println 'PDF: ' + anchorText + '(' + url + ')'
-        println '*'
-        println '*'
+        println 'PDF: ' + anchor
+        println 'found in: ' + anchor.container?.location()
+        println '------------------------------------------------------------------------------------------------------'
     }
 
-    void image(String url, String anchorText, String imageType)
+    void processImage(Anchor anchor, String imageType, long time)
     {
-        println '*'
-        println '*'
-        println 'image: ' + anchorText + '(' + url + ')'
+        println 'image: ' + anchor
         println 'type: ' + imageType
-        println '*'
-        println '*'
+        println 'found in: ' + anchor.container?.location()
+        println '------------------------------------------------------------------------------------------------------'
     }
 
-    void zip(String url, String anchorText)
+    void processZip(Anchor anchor, long time)
     {
-        println '*'
-        println '*'
-        println 'zip: ' + anchorText + '(' + url + ')'
-        println '*'
-        println '*'
+        println 'zip: ' + anchor
+        println 'found in: ' + anchor.container?.location()
+        println '------------------------------------------------------------------------------------------------------'
     }
 
-    void jar(String url, String anchorText)
+    void processJar(Anchor anchor, long time)
     {
-        println '*'
-        println '*'
-        println 'zip: ' + anchorText + '(' + url + ')'
-        println '*'
-        println '*'
+        println 'jar: ' + anchor
+        println 'found in: ' + anchor.container?.location()
+        println '------------------------------------------------------------------------------------------------------'
     }
 
-    void mailto(String anchorText, String emailAddress)
+    void processMailto(Anchor anchor, String emailAddress, long time)
     {
-        println '*'
-        println '*'
-        println 'Email: ' + emailAddress
-        println '*'
-        println '*'
+        println 'email: ' + anchor
+        println 'address: ' + emailAddress
+        println 'found in: ' + anchor.container?.location()
+        println '------------------------------------------------------------------------------------------------------'
+    }
+
+    /**
+     * Call this method if you want to retrieve all the CSS links (URLs) from the
+     * passed in Document.
+     * @param doc Document that was received
+     * @return Set<String> URLs to CSS content
+     */
+    private Elements fetchLinks(Document doc)
+    {
+        Elements imports = doc.select("link[href]")
+
+        // Example of getting content from the element
+//        for (Element link : imports)
+//        {
+//            String tagName = link.tagName()
+//            String url1 = link.attr('abs:href')
+//            String rel = link.attr('rel')
+//        }
+
+        return imports
+    }
+
+    private Elements fetchMedia(Document doc)
+    {
+        Elements media = doc.select('[src]')
+
+        // Example of getting content from the element
+//        for (Element src : media)
+//        {
+//            final String tagName = src.tagName()
+//            if (tagName.equals('img'))
+//            {
+//                String url = src.attr('abs:src')
+//                String width = src.attr('width')
+//                String height = src.attr('height')
+//                String altText = src.attr('alt')
+//            }
+//            else
+//            {
+//                String url = src.attr('abs:src')
+//            }
+//        }
+        return media
     }
 }

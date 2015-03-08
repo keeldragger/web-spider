@@ -34,7 +34,7 @@ class WebSpider
     void crawl(Receiver receiver)
     {
         final Deque<Anchor> stack = new ArrayDeque<>()
-        stack.addFirst(new Anchor(url:'http://groovy-lang.org/', text:'root'))
+        stack.addFirst(new Anchor(url:'https://github.com/jdereg/json-io', text:'experian', container: (Document) null))
         Set<String> visited = new HashSet<>()
 
         while (!stack.isEmpty())
@@ -47,13 +47,15 @@ class WebSpider
             }
 
             visited.add(anchor.url.length() <= 40 ? anchor.url : EncryptionUtilities.calculateSHA1Hash(anchor.url.bytes))
+
             try
             {
                 // Snag HTML Document at URL
-                Document doc = Jsoup.connect(anchor.url).userAgent(USER_AGENT).followRedirects(true).get()
-                receiver.html(anchor.url, anchor.text, doc, System.currentTimeMillis())
-                Map<String, Set<Anchor>> contents = extractUrls(doc)
-                for (Anchor link in contents.links)
+                Document doc = Jsoup.connect(anchor.url).userAgent(USER_AGENT).followRedirects(true).timeout(10000).get()
+                Set<Anchor> links = extractUrls(doc)
+                receiver.processLink(anchor, doc, System.currentTimeMillis())
+
+                for (Anchor link in links)
                 {
                     if (StringUtilities.hasContent(link.url) && !beenThere(link.url, visited))
                     {   // Skip empty or blank urls.
@@ -72,7 +74,7 @@ class WebSpider
                     String email = anchor.url.substring(7)
                     if (emailPattern.matcher(email).find())
                     {
-                        receiver.mailto(anchor.text, email)
+                        receiver.processMailto(anchor, email, now())
                     }
                 }
                 else
@@ -85,19 +87,19 @@ class WebSpider
                 String mimeType = e.mimeType.toLowerCase()
                 if (mimeType.startsWith("application/pdf"))
                 {
-                    receiver.pdf(anchor.url, anchor.text)
+                    receiver.processPDF(anchor, now())
                 }
                 else if (mimeType.startsWith("image/"))
                 {
-                    receiver.image(anchor.url, anchor.text, mimeType.substring(6))
+                    receiver.processImage(anchor, mimeType.substring(6), now())
                 }
-                else if (mimeType.startsWith("application/zip"))
+                else if (mimeType.startsWith("application/zip") || mimeType.startsWith("application/x-gzip"))
                 {
-                    receiver.zip(anchor.url, anchor.text)
+                    receiver.processZip(anchor, now())
                 }
                 else if (mimeType.startsWith("application/java-archive"))
                 {
-                    receiver.jar(anchor.url, anchor.text)
+                    receiver.processJar(anchor, now())
                 }
                 else
                 {
@@ -136,54 +138,24 @@ class WebSpider
     /**
      * Return links from passed in Jsoup Document
      * @param doc Document that was fetched by Jsoup
-     * @return Map containing all links:
-     * [a: [],
-     *  script: [],
-     *  img: [],
-     *  input: []
-     *  ...
-     *  ]
+     * @return Map containing all links
      */
-    Map extractUrls(Document doc)
+    Set<Anchor> extractUrls(Document doc)
     {
-        Map contents = [:]
         Set<Anchor> links = []
-
         Elements anchors = doc.select("a[href]")
-        Elements media = doc.select("[src]")
-        Elements imports = doc.select("link[href]")
 
-//        print("\nLinks: (%d)", links.size())
         for (Element anchor : anchors)
         {
-            Anchor link = new Anchor([url:anchor.attr('abs:href'), text:anchor.text()])
+            Anchor link = new Anchor([url:anchor.attr('abs:href'), text:anchor.text(), container: doc])
             links.add(link)
         }
 
-        contents.links = links
+        return links
+    }
 
-//        print("\nMedia: (%d)", media.size())
-//        for (Element src : media)
-//        {
-//            if (src.tagName().equals("img"))
-//            {
-//                print(" * %s: <%s> %sx%s (%s)",
-//                        src.tagName(), src.attr("abs:src"), src.attr("width"), src.attr("height"),
-//                        trim(src.attr("alt"), 20))
-//            }
-//            else
-//            {
-//                print(" * %s: <%s>", src.tagName(), src.attr("abs:src"))
-//            }
-//        }
-//
-//        print("\nImports: (%d)", imports.size())
-//        for (Element link : imports)
-//        {
-//            print(" * %s <%s> (%s)", link.tagName(), link.attr("abs:href"), link.attr("rel"))
-//        }
-
-
-        return contents
+    long now()
+    {
+        System.currentTimeMillis()
     }
 }
