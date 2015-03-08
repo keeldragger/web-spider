@@ -36,7 +36,7 @@
         <version.java-util>1.18.0</version.java-util>
         <version.junit>4.12</version.junit>
         <version.groovy>2.4.1</version.groovy>
-        <version.gson>2.3</version.gson>
+        <version.jsoup>1.8.1</version.jsoup>
         <version.plugin.compiler>3.2</version.plugin.compiler>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.source>2.4</version.plugin.source>
@@ -190,6 +190,12 @@
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
             <version>${version.groovy}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${version.jsoup}</version>
         </dependency>
 
     </dependencies>

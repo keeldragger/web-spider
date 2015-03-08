@@ -1,5 +1,7 @@
 package com.cedarsoftware.util.io
 
+import com.cedarsoftware.webspider.Receiver
+import com.cedarsoftware.webspider.WebSpider
 import org.junit.Test;
 
 /**
@@ -24,6 +26,8 @@ public class TestSpider
     @Test
     void testSpider()
     {
-        assert 1 == 1
+        WebSpider spider = new WebSpider()
+        Receiver receiver = new Receiver()
+        spider.crawl(receiver)
     }
 }
