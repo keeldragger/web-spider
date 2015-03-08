@@ -5,12 +5,19 @@ package com.cedarsoftware.webspider
  */
 class Receiver
 {
-    void receive(String url, String content, long time)
+    void digest(String sourceUrl, String actualUrl, String title, String content, long time)
     {
-        println 'url: ' + url
+        println 'source: ' + sourceUrl
+        println 'actual: ' + actualUrl
+        println 'title: ' + title
 //        println 'time: ' + new Date(time)
-//        println '------------------------------------------------------------------------------------------------------'
+        println '------------------------------------------------------------------------------------------------------'
 //        println content
 //        println '******************************************************************************************************'
+    }
+
+    void mailto(String emailAddress)
+    {
+        println 'Email address: ' + emailAddress
     }
 }
