@@ -13,7 +13,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 
-import javax.net.ssl.SSLHandshakeException
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -42,8 +41,9 @@ import java.util.regex.Pattern
 class WebSpider
 {
     static final String USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'
+    private static final int sha1Length = 40
     private static final Logger LOG = LogManager.getLogger(WebSpider.class)
-    private static final Pattern emailPattern = ~/.+\@.+\..+/
+    private static final Pattern emailPattern = ~/.+@.+\..+/
     private static final Pattern protocolPattern = ~/(http:\\/\\/|https:\\/\\/|ftp:\\/\\/|mailto:)(.+)/
 
     WebSpider()
@@ -65,15 +65,15 @@ class WebSpider
             final Anchor anchor = stack.removeFirst()
 
             if (beenThere(anchor.url, visited))
-            {   // Don't redo site already processed.
+            {   // skip already processed work
                 continue
             }
 
-            visited.add(anchor.url.length() <= 40 ? anchor.url : EncryptionUtilities.calculateSHA1Hash(anchor.url.bytes))
+            visited.add(anchor.url.length() <= sha1Length ? anchor.url : EncryptionUtilities.calculateSHA1Hash(anchor.url.bytes))
 
             try
             {
-                if (anchor.root.stayInDomain && !isWithinDomain(anchor.url, anchor.root.domain))
+                if (StringUtilities.hasContent(anchor.root.domain) && !isWithinDomain(anchor.url, anchor.root.domain))
                 {
                     continue;
                 }
@@ -81,6 +81,7 @@ class WebSpider
                 // Snag HTML Document at URL
                 Document doc = Jsoup.connect(anchor.url).userAgent(USER_AGENT).followRedirects(true).timeout(10000).get()
 
+                // Fetch anchor tags
                 Elements anchors = doc.select("a[href]")
                 Set<Anchor> links = []
 
@@ -90,6 +91,8 @@ class WebSpider
                     links.add(a)
                 }
 
+                // Tell receiver
+                // TODO: Need to implement producer consumer here (don't block producer thread on calling receive)
                 receiver.processLink(anchor, doc, System.currentTimeMillis())
 
                 for (Anchor link in links)
@@ -112,26 +115,13 @@ class WebSpider
             {
                 LOG.info('HTTP status exception (' + e.statusCode + '), url: ' + anchor.url + ', ' + e.message)
             }
-            catch (SocketTimeoutException e)
+            catch (IOException | IllegalArgumentException e)
             {
-                LOG.info('Socket timeout, url: ' + anchor.url + ', msg: ' + e.message)
-            }
-            catch (SSLHandshakeException e)
-            {
-                LOG.info('SSL Handshake error, url: ' + anchor.url + ', msg: ' + e.message)
-            }
-            catch (IOException e)
-            {
-                LOG.info('IO Exception, url: ' + anchor.url + ', msg: ' + e.message)
-            }
-            catch (IllegalArgumentException e)
-            {
-                LOG.info('Illegal argument exception, url: ' + anchor.url + ', msg: ' + e.message)
+                LOG.info(e.getClass().simpleName + ' occurred. URL: ' + anchor.url + ', msg: ' + e.message)
             }
             catch (Exception e)
             {
-                System.err.println 'error, url: ' + anchor
-                e.printStackTrace(System.err)
+                LOG.warn('Unexpected exception occurred processing URL: ' + anchor.url, e);
             }
         }
     }
@@ -198,11 +188,7 @@ class WebSpider
     public static boolean isWithinDomain(String url, String domain) throws URISyntaxException
     {
         Matcher matcher = protocolPattern.matcher(url);
-        if (matcher.find())
-        {
-            return matcher.group(2).toLowerCase().startsWith(domain)
-        }
-        return false
+        return matcher.find() && matcher.group(2).toLowerCase().startsWith(domain)
     }
 
     long now()
