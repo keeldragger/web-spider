@@ -38,9 +38,9 @@ class Receiver
 //        println 'source: ' + url
         println 'link: ' + anchor
         println 'source doc: ' + anchor.containerUrl
+//        println doc.outerHtml()
         println '------------------------------------------------------------------------------------------------------'
 //        println 'title: ' + doc.title()
-//        println 'html: ' + doc.outerHtml()
 //        println 'time: ' + new Date(time)
 
     }

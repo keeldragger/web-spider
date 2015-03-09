@@ -1,5 +1,10 @@
 package com.cedarsoftware.webspider
 
+import com.cedarsoftware.util.StringUtilities
+
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 /**
  * This class is used as input to the WebSpider
  *
@@ -25,4 +30,14 @@ class Root
     String name
     String url
     String domain
+    private static final Pattern protocolPattern = ~/(http:\\/\\/|https:\\/\\/|ftp:\\/\\/|mailto:)(.+)/
+
+    boolean isWithinDomain(String url)
+    {
+        if (StringUtilities.hasContent(domain))
+        {
+            Matcher matcher = protocolPattern.matcher(url);
+            return matcher && matcher.group(2).toLowerCase().startsWith(domain)
+        }
+    }
 }

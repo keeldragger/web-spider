@@ -13,7 +13,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
@@ -44,14 +43,13 @@ class WebSpider
     private static final int sha1Length = 40
     private static final Logger LOG = LogManager.getLogger(WebSpider.class)
     private static final Pattern emailPattern = ~/.+@.+\..+/
-    private static final Pattern protocolPattern = ~/(http:\\/\\/|https:\\/\\/|ftp:\\/\\/|mailto:)(.+)/
 
     WebSpider()
     {
         UrlUtilities.userAgent = USER_AGENT
     }
 
-    void crawl(Receiver receiver, List<Root> roots)
+    static void crawl(Receiver receiver, List<Root> roots)
     {
         final Deque<Anchor> stack = new ArrayDeque<>()
         for (Root root in roots)
@@ -73,7 +71,7 @@ class WebSpider
 
             try
             {
-                if (StringUtilities.hasContent(anchor.root.domain) && !isWithinDomain(anchor.url, anchor.root.domain))
+                if (!anchor.root.isWithinDomain(anchor.url))
                 {
                     continue;
                 }
@@ -124,6 +122,8 @@ class WebSpider
                 LOG.warn('Unexpected exception occurred processing URL: ' + anchor.url, e);
             }
         }
+
+        println 'Visited ' + visited.size() + ' links.'
     }
 
     /**
@@ -135,7 +135,7 @@ class WebSpider
      * @param receiver Receive that will be passed information regarding the link
      * @param anchor Anchor object representing the link (link text, url, and source doc url)
      */
-    private void processUnsupportedMimeType(UnsupportedMimeTypeException e, Receiver receiver, Anchor anchor)
+    private static void processUnsupportedMimeType(UnsupportedMimeTypeException e, Receiver receiver, Anchor anchor)
     {
         String mimeType = e.mimeType.toLowerCase()
         if (mimeType.startsWith("application/pdf"))
@@ -164,7 +164,7 @@ class WebSpider
         }
     }
 
-    private void processMalformedException(Anchor anchor, Receiver receiver, MalformedURLException e)
+    private static void processMalformedException(Anchor anchor, Receiver receiver, MalformedURLException e)
     {
         if (anchor.url.toLowerCase().startsWith("mailto:"))
         {
@@ -180,18 +180,12 @@ class WebSpider
         }
     }
 
-    boolean beenThere(String url, Set<String> visited)
+    static boolean beenThere(String url, Set<String> visited)
     {
         return visited.contains(url) || visited.contains(EncryptionUtilities.calculateSHA1Hash(url.bytes))
     }
 
-    public static boolean isWithinDomain(String url, String domain) throws URISyntaxException
-    {
-        Matcher matcher = protocolPattern.matcher(url);
-        return matcher.find() && matcher.group(2).toLowerCase().startsWith(domain)
-    }
-
-    long now()
+    static long now()
     {
         System.currentTimeMillis()
     }
