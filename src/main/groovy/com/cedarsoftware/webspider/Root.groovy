@@ -1,12 +1,8 @@
-package com.cedarsoftware.util.io
-
-import com.cedarsoftware.webspider.Receiver
-import com.cedarsoftware.webspider.Root
-import com.cedarsoftware.webspider.WebSpider
-import groovy.transform.CompileStatic
-import org.junit.Test;
+package com.cedarsoftware.webspider
 
 /**
+ * This class is used as input to the WebSpider
+ *
  * @author John DeRegnaucourt (john@cedarsoftware.com)
  *         <br>
  *         Copyright (c) Cedar Software LLC
@@ -23,17 +19,10 @@ import org.junit.Test;
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@CompileStatic
-public class TestSpider
+
+class Root
 {
-    @Test
-    void testSpider()
-    {
-        Root root1 = new Root(name:'MOD Online Backup', url:'http://www.myotherdrive.com/', stayInDomain: true)
-        Root root2 = new Root(name:'Government Data', url:'http://www.data.gov/', stayInDomain: true)
-        WebSpider spider = new WebSpider()
-        Receiver receiver = new Receiver()
-        def roots = [root1, root2]
-        spider.crawl(receiver, roots)
-    }
+    String name
+    String url
+    boolean stayInDomain = true
 }

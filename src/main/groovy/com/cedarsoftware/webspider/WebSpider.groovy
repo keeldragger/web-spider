@@ -17,7 +17,25 @@ import javax.net.ssl.SSLHandshakeException
 import java.util.regex.Pattern
 
 /**
- * Created by jderegnaucourt on 2015/03/08.
+ * WebSpider allows you to spider (or crawl) a set of urls, ad-infinitim.  The URLs are passed in as roots, with
+ * some extra 'control' information, indicating such things as to bind the spider to the confines of the domain
+ * or to let it go where the wind (links) take it.
+ *
+ * @author John DeRegnaucourt (john@cedarsoftware.com)
+ *         <br>
+ *         Copyright (c) Cedar Software LLC
+ *         <br><br>
+ *         Licensed under the Apache License, Version 2.0 (the "License")
+ *         you may not use this file except in compliance with the License.
+ *         You may obtain a copy of the License at
+ *         <br><br>
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *         <br><br>
+ *         Unless required by applicable law or agreed to in writing, software
+ *         distributed under the License is distributed on an "AS IS" BASIS,
+ *         WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *         See the License for the specific language governing permissions and
+ *         limitations under the License.
  */
 @CompileStatic
 class WebSpider
@@ -31,10 +49,13 @@ class WebSpider
         UrlUtilities.userAgent = USER_AGENT
     }
 
-    void crawl(Receiver receiver)
+    void crawl(Receiver receiver, List<Root> roots)
     {
         final Deque<Anchor> stack = new ArrayDeque<>()
-        stack.addFirst(new Anchor(url:'https://github.com/jdereg/json-io', text:'experian', container: (String)null))
+        for (Root root in roots)
+        {
+            stack.addFirst(new Anchor(url:root.url, text:root.name, containerUrl: (String)null))
+        }
         Set<String> visited = new HashSet<>()
 
         while (!stack.isEmpty())
@@ -127,6 +148,10 @@ class WebSpider
         {
             receiver.processJar(anchor, now())
         }
+        else if (mimeType.startsWith('application/json'))
+        {
+            receiver.processJson(anchor, now())
+        }
         else
         {
             receiver.processOther(anchor, mimeType, now())
@@ -165,7 +190,7 @@ class WebSpider
         Elements anchors = doc.select("a[href]")
         for (Element anchor : anchors)
         {
-            Anchor link = new Anchor([url:anchor.attr('abs:href'), text:anchor.text(), container: doc.location()])
+            Anchor link = new Anchor([url:anchor.attr('abs:href'), text:anchor.text(), containerUrl: doc.location()])
             links.add(link)
         }
         return links
