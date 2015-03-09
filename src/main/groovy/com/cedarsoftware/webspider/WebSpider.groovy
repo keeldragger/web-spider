@@ -34,7 +34,7 @@ class WebSpider
     void crawl(Receiver receiver)
     {
         final Deque<Anchor> stack = new ArrayDeque<>()
-        stack.addFirst(new Anchor(url:'https://github.com/jdereg/json-io', text:'experian', container: (Document) null))
+        stack.addFirst(new Anchor(url:'https://github.com/jdereg/json-io', text:'experian', container: (String)null))
         Set<String> visited = new HashSet<>()
 
         while (!stack.isEmpty())
@@ -63,48 +63,17 @@ class WebSpider
                     }
                 }
             }
-            catch (HttpStatusException e)
-            {
-                LOG.info('HTTP status exception (' + e.statusCode + '), url: ' + anchor.url + ', ' + e.message)
-            }
             catch (MalformedURLException e)
             {
-                if (anchor.url.toLowerCase().startsWith("mailto:"))
-                {
-                    String email = anchor.url.substring(7)
-                    if (emailPattern.matcher(email).find())
-                    {
-                        receiver.processMailto(anchor, email, now())
-                    }
-                }
-                else
-                {
-                    LOG.info('Malformed URL, url: ' + anchor.url + ', msg: ' + e.message)
-                }
+                processMalformedException(anchor, receiver, e)
             }
             catch (UnsupportedMimeTypeException e)
             {
-                String mimeType = e.mimeType.toLowerCase()
-                if (mimeType.startsWith("application/pdf"))
-                {
-                    receiver.processPDF(anchor, now())
-                }
-                else if (mimeType.startsWith("image/"))
-                {
-                    receiver.processImage(anchor, mimeType.substring(6), now())
-                }
-                else if (mimeType.startsWith("application/zip") || mimeType.startsWith("application/x-gzip"))
-                {
-                    receiver.processZip(anchor, now())
-                }
-                else if (mimeType.startsWith("application/java-archive"))
-                {
-                    receiver.processJar(anchor, now())
-                }
-                else
-                {
-                    LOG.info('Unsupported mime type (' + e.mimeType + '), url: ' + anchor.url)
-                }
+                processUnsupportedMimeType(e, receiver, anchor)
+            }
+            catch (HttpStatusException e)
+            {
+                LOG.info('HTTP status exception (' + e.statusCode + '), url: ' + anchor.url + ', ' + e.message)
             }
             catch (SocketTimeoutException e)
             {
@@ -124,9 +93,59 @@ class WebSpider
             }
             catch (Exception e)
             {
-                println 'error, url: ' + anchor
-                e.printStackTrace()
+                System.err.println 'error, url: ' + anchor
+                e.printStackTrace(System.err)
             }
+        }
+    }
+
+    /**
+     * Look at mime type and call specific methods on receiver for those, and processOther() for
+     * other types.  Theoretically, all could be handled via processOther().  I've just broken a few
+     * common types out so that Receiver implements will get the idea on how to handle these.
+     *
+     * @param e UnsupportedMimeTypeException that was thrown
+     * @param receiver Receive that will be passed information regarding the link
+     * @param anchor Anchor object representing the link (link text, url, and source doc url)
+     */
+    private void processUnsupportedMimeType(UnsupportedMimeTypeException e, Receiver receiver, Anchor anchor)
+    {
+        String mimeType = e.mimeType.toLowerCase()
+        if (mimeType.startsWith("application/pdf"))
+        {
+            receiver.processPDF(anchor, now())
+        }
+        else if (mimeType.startsWith("image/"))
+        {
+            receiver.processImage(anchor, mimeType.substring(6), now())
+        }
+        else if (mimeType.startsWith("application/zip") || mimeType.startsWith("application/x-gzip"))
+        {
+            receiver.processZip(anchor, now())
+        }
+        else if (mimeType.startsWith("application/java-archive"))
+        {
+            receiver.processJar(anchor, now())
+        }
+        else
+        {
+            receiver.processOther(anchor, mimeType, now())
+        }
+    }
+
+    private void processMalformedException(Anchor anchor, Receiver receiver, MalformedURLException e)
+    {
+        if (anchor.url.toLowerCase().startsWith("mailto:"))
+        {
+            String email = anchor.url.substring(7)
+            if (emailPattern.matcher(email).find())
+            {
+                receiver.processMailto(anchor, email, now())
+            }
+        }
+        else
+        {
+            LOG.info('Malformed URL, url: ' + anchor.url + ', msg: ' + e.message)
         }
     }
 
@@ -144,13 +163,11 @@ class WebSpider
     {
         Set<Anchor> links = []
         Elements anchors = doc.select("a[href]")
-
         for (Element anchor : anchors)
         {
-            Anchor link = new Anchor([url:anchor.attr('abs:href'), text:anchor.text(), container: doc])
+            Anchor link = new Anchor([url:anchor.attr('abs:href'), text:anchor.text(), container: doc.location()])
             links.add(link)
         }
-
         return links
     }
 

@@ -19,8 +19,7 @@ class Receiver
     {
 //        println 'source: ' + url
         println 'link: ' + anchor
-//        println 'found in: ' + anchor.container?.location()
-        fetchLinks(doc)
+        println 'source doc: ' + anchor.container
         println '------------------------------------------------------------------------------------------------------'
 //        println 'title: ' + doc.title()
 //        println 'html: ' + doc.outerHtml()
@@ -31,7 +30,7 @@ class Receiver
     void processPDF(Anchor anchor, long time)
     {
         println 'PDF: ' + anchor
-        println 'found in: ' + anchor.container?.location()
+        println 'found in: ' + anchor.container
         println '------------------------------------------------------------------------------------------------------'
     }
 
@@ -39,21 +38,21 @@ class Receiver
     {
         println 'image: ' + anchor
         println 'type: ' + imageType
-        println 'found in: ' + anchor.container?.location()
+        println 'found in: ' + anchor.container
         println '------------------------------------------------------------------------------------------------------'
     }
 
     void processZip(Anchor anchor, long time)
     {
         println 'zip: ' + anchor
-        println 'found in: ' + anchor.container?.location()
+        println 'found in: ' + anchor.container
         println '------------------------------------------------------------------------------------------------------'
     }
 
     void processJar(Anchor anchor, long time)
     {
         println 'jar: ' + anchor
-        println 'found in: ' + anchor.container?.location()
+        println 'found in: ' + anchor.container
         println '------------------------------------------------------------------------------------------------------'
     }
 
@@ -61,7 +60,15 @@ class Receiver
     {
         println 'email: ' + anchor
         println 'address: ' + emailAddress
-        println 'found in: ' + anchor.container?.location()
+        println 'found in: ' + anchor.container
+        println '------------------------------------------------------------------------------------------------------'
+    }
+
+    void processOther(Anchor anchor, String mimeType, long time)
+    {
+        println 'image: ' + anchor
+        println 'mimeType: ' + mimeType
+        println 'found in: ' + anchor.container
         println '------------------------------------------------------------------------------------------------------'
     }
 
