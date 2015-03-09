@@ -24,5 +24,6 @@ class Root
 {
     String name
     String url
+    String domain
     boolean stayInDomain = true
 }

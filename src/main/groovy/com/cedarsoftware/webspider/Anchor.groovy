@@ -24,6 +24,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class Anchor
 {
+    Root root
     String containerUrl
     String url
     String text

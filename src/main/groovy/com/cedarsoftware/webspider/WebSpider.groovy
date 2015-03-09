@@ -14,6 +14,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 
 import javax.net.ssl.SSLHandshakeException
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
@@ -43,6 +44,7 @@ class WebSpider
     static final String USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'
     private static final Logger LOG = LogManager.getLogger(WebSpider.class)
     private static final Pattern emailPattern = ~/.+\@.+\..+/
+    private static final Pattern protocolPattern = ~/(http:\\/\\/|https:\\/\\/|ftp:\\/\\/|mailto:)(.+)/
 
     WebSpider()
     {
@@ -54,7 +56,7 @@ class WebSpider
         final Deque<Anchor> stack = new ArrayDeque<>()
         for (Root root in roots)
         {
-            stack.addFirst(new Anchor(url:root.url, text:root.name, containerUrl: (String)null))
+            stack.add(new Anchor(url:root.url, text:root.name, containerUrl: (String)null, root: root))
         }
         Set<String> visited = new HashSet<>()
 
@@ -71,9 +73,23 @@ class WebSpider
 
             try
             {
+                if (anchor.root.stayInDomain && !isWithinDomain(anchor.url, anchor.root.domain))
+                {
+                    continue;
+                }
+
                 // Snag HTML Document at URL
                 Document doc = Jsoup.connect(anchor.url).userAgent(USER_AGENT).followRedirects(true).timeout(10000).get()
-                Set<Anchor> links = extractUrls(doc)
+
+                Elements anchors = doc.select("a[href]")
+                Set<Anchor> links = []
+
+                for (Element link : anchors)
+                {
+                    Anchor a = new Anchor([url:link.attr('abs:href'), text:link.text(), containerUrl: doc.location(), root: anchor.root])
+                    links.add(a)
+                }
+
                 receiver.processLink(anchor, doc, System.currentTimeMillis())
 
                 for (Anchor link in links)
@@ -179,21 +195,14 @@ class WebSpider
         return visited.contains(url) || visited.contains(EncryptionUtilities.calculateSHA1Hash(url.bytes))
     }
 
-    /**
-     * Return links from passed in Jsoup Document
-     * @param doc Document that was fetched by Jsoup
-     * @return Map containing all links
-     */
-    Set<Anchor> extractUrls(Document doc)
+    public static boolean isWithinDomain(String url, String domain) throws URISyntaxException
     {
-        Set<Anchor> links = []
-        Elements anchors = doc.select("a[href]")
-        for (Element anchor : anchors)
+        Matcher matcher = protocolPattern.matcher(url);
+        if (matcher.find())
         {
-            Anchor link = new Anchor([url:anchor.attr('abs:href'), text:anchor.text(), containerUrl: doc.location()])
-            links.add(link)
+            return matcher.group(2).toLowerCase().startsWith(domain)
         }
-        return links
+        return false
     }
 
     long now()
