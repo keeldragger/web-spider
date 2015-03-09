@@ -49,7 +49,7 @@ class WebSpider
         UrlUtilities.userAgent = USER_AGENT
     }
 
-    static void crawl(Receiver receiver, List<Root> roots)
+    void crawl(Receiver receiver, List<Root> roots)
     {
         final Deque<Anchor> stack = new ArrayDeque<>()
         for (Root root in roots)
@@ -113,13 +113,9 @@ class WebSpider
             {
                 LOG.info('HTTP status exception (' + e.statusCode + '), url: ' + anchor.url + ', ' + e.message)
             }
-            catch (IOException | IllegalArgumentException e)
-            {
-                LOG.info(e.getClass().simpleName + ' occurred. URL: ' + anchor.url + ', msg: ' + e.message)
-            }
             catch (Exception e)
             {
-                LOG.warn('Unexpected exception occurred processing URL: ' + anchor.url, e);
+                LOG.info(e.getClass().simpleName + ' occurred. URL: ' + anchor.url + ', msg: ' + e.message)
             }
         }
 

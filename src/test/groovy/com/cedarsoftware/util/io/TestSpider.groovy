@@ -29,12 +29,12 @@ public class TestSpider
     @Test
     void testSpider()
     {
-        Root root1 = new Root(name:'MOD Online Backup', url:'http://www.myotherdrive.com/', domain: 'www.myotherdrive.com')
+//        Root root1 = new Root(name:'MOD Online Backup', url:'http://www.myotherdrive.com/', domain: 'www.myotherdrive.com')
 //        Root root2 = new Root(name:'JSON org', url:'http://www.json.org/', domain:'www.json.org')
 //        Root root2 = new Root(name:'Government Data', url:'http://www.data.gov/')
+
+        Root root1 = new Root(name:'Government Data', url:'http://www.data.gov/', domain:'www.data.gov')
         WebSpider spider = new WebSpider()
-        Receiver receiver = new Receiver()
-        def roots = [root1]
-        spider.crawl(receiver, roots)
+        spider.crawl(new Receiver(), [root1])
     }
 }
