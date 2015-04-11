@@ -36,6 +36,8 @@
         <version.java-util>1.18.0</version.java-util>
         <version.junit>4.12</version.junit>
         <version.groovy>2.4.1</version.groovy>
+        <version.groovycsv>1.0</version.groovycsv>
+        <version.mongodb.driver>3.0.0</version.mongodb.driver>
         <version.jsoup>1.8.1</version.jsoup>
         <version.plugin.compiler>3.2</version.plugin.compiler>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
@@ -196,6 +198,18 @@
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>${version.jsoup}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.xlson.groovycsv</groupId>
+            <artifactId>groovycsv</artifactId>
+            <version>${version.groovycsv}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver</artifactId>
+            <version>${version.mongodb.driver}</version>
         </dependency>
 
     </dependencies>
