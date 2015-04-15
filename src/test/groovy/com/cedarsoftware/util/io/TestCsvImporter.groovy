@@ -1,6 +1,8 @@
 package com.cedarsoftware.util.io
 
 import com.cedarsoftware.csv.mongo.CsvImporter
+import com.cedarsoftware.csv.mysql.CsvMySqlImporter
+import org.junit.Ignore
 import org.junit.Test
 
 import static groovy.io.FileType.FILES
@@ -24,7 +26,7 @@ import static groovy.io.FileType.FILES
  */
 class TestCsvImporter
 {
-    @Test
+    @Ignore
     void testImport()
     {
         CsvImporter importer = new CsvImporter()
@@ -32,6 +34,20 @@ class TestCsvImporter
                 { file ->
                     if (file.name.matches(~/^.*\.csv$/))
                     {
+                        importer.importCsv(file)
+                    }
+                }
+    }
+
+    @Test
+    void testImportMysql()
+    {
+        CsvMySqlImporter importer = new CsvMySqlImporter()
+        new File('/Users/jderegnaucourt/Desktop/Personal/data/').eachFileRecurse(FILES)
+                { file ->
+                    if (file.name.matches(~/^.*\.csv$/))
+                    {
+                        println file
                         importer.importCsv(file)
                     }
                 }

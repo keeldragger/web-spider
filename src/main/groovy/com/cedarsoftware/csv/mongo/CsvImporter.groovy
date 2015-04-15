@@ -3,9 +3,9 @@ package com.cedarsoftware.csv.mongo
 import com.mongodb.MongoClient
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
-import com.xlson.groovycsv.CsvParser
-import com.xlson.groovycsv.PropertyMapper
 import groovy.transform.CompileStatic
+import org.apache.commons.csv.CSVFormat
+import org.apache.commons.csv.CSVRecord
 import org.bson.Document
 
 /**
@@ -35,15 +35,14 @@ class CsvImporter
         MongoCollection<Document> collection = database.getCollection("companies")
         int recNum = 0
         file.withReader { reader ->
-            Iterator i = CsvParser.parseCsv([autoDetect:true], reader)
-            while (i.hasNext())
+            Iterable<CSVRecord> records = CSVFormat.EXCEL.parse(reader);
+            for (CSVRecord record : records)
             {
-                PropertyMapper mapper = (PropertyMapper) i.next()
                 recNum++
                 try
                 {
-                    Map record = toMap(mapper)
-                    Document business = new Document(record)
+                    Map map = record.toMap()
+                    Document business = new Document((Map<String, Object>)map)
                     collection.insertOne(business)
                 }
                 catch (Exception e)
@@ -53,17 +52,5 @@ class CsvImporter
                 }
             }
         }
-    }
-
-    Map toMap(PropertyMapper mapper)
-    {
-        Map ret = [:]
-        Map cols = (Map) mapper.columns;
-        for (Map.Entry<String, Object> entry : cols.entrySet())
-        {
-            Integer i = (Integer) entry.value
-            ret[entry.key] = mapper.getAt(i)
-        }
-        return ret
     }
 }
